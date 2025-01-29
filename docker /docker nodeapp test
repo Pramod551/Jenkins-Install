@@ -1,0 +1,27 @@
+docker stop nodecontainer |true
+docker rm nodecontainer |true
+docker run -d -p80:3000 --name nodecontainer nodeimg
+
+
+max_attempts=10
+current_attempt=0
+
+while [ $current_attempt -lt $max_attempts ]; do
+    # Capture the container status
+    container_status=$(docker ps --format "{{.Names}}: {{.Status}}" | grep 'nodecontainer' | awk -F': ' '{print $2}')
+
+    # Check if the container status starts with "Up"
+    if echo "$container_status" | grep -q "^Up"; then
+        echo "Container 'nodecontainer' is running successfully!"
+        break
+    else
+        echo "Attempt $((current_attempt + 1)): Container is not running. Retrying..."
+        sleep 3
+        current_attempt=$((current_attempt + 1))
+    fi
+done
+
+if [ $current_attempt -eq $max_attempts ]; then
+    echo "Container 'nodecontainer' did not start within $max_attempts attempts."
+    exit 1
+fi
